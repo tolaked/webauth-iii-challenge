@@ -1,8 +1,9 @@
 const router = require("express").Router();
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const Users = require("../User/user");
-// const restricted = require("../middleware/restricted");
+const restricted = require("./restricted");
 
 router.get("/logout", (req, res) => {
   if (req.session) {
@@ -44,8 +45,11 @@ router.post("/login", (req, res) => {
     .then(user => {
       // check if the provided password is correct
       if (user && bcrypt.compareSync(password, user.password)) {
-        req.session.user = user;
-        res.status(200).json({ message: `Welcome ${user.username}!` });
+        const token = generateToken(user);
+
+        res
+          .status(200)
+          .json({ message: `Welcome ${user.username}!`, token: token });
       } else {
         res.status(401).json({ message: "Invalid Credentials" });
       }
@@ -55,7 +59,7 @@ router.post("/login", (req, res) => {
     });
 });
 
-router.get("/users", (req, res) => {
+router.get("/users", restricted, (req, res) => {
   Users.find()
     .then(users => {
       res.json(users);
@@ -63,4 +67,15 @@ router.get("/users", (req, res) => {
     .catch(err => res.send(err));
 });
 
+function generateToken(user) {
+  const result = jwt.sign(
+    { subject: user.department, username: user.username },
+    "D4RE!EFGF",
+    {
+      expiresIn: "48h"
+    }
+  );
+
+  return result;
+}
 module.exports = router;
