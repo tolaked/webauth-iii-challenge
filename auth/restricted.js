@@ -19,8 +19,8 @@ module.exports = (req, res, next) => {
     const decodedToken = jwt.verify(token, "D4RE!EFGF");
 
     // find user by email
-    const user = User.findById(decodedToken.id);
-    console.log(user);
+    const user = User.findBy(decodedToken.username).first();
+
     // check if user exist
     if (!user) {
       return res.status(401).json({
